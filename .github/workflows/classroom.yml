@@ -1,0 +1,67 @@
+name: Autograding Tests
+on: [push, workflow_dispatch, repository_dispatch]
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CPU PyTorch + project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch==2.12.0+cpu --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      # --- TEST SUITE (15 points total, cumulative tiers — each requires the previous) ---
+
+      # Tier 5: model.pt exists, matches the I/O contract, <= 4M params; project.ipynb's own
+      # section (>= "## 3") imports an allowed SB3 algorithm and calls .learn() (the prewritten
+      # naive baseline in sections 1-2 does not count).
+      - name: Tier 5 - Training and contract
+        id: tier5
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: "Tier 5: Training & Contract"
+          command: "pytest tests/test.py::TestTier05_TrainingAndContract -v"
+          timeout: 3
+          max-score: 5
+
+      # Tier 10: the agent moves the cube (touch_rate >= 80%) over ~30 evaluation episodes.
+      - name: Tier 10 - Touch
+        id: tier10
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: "Tier 10: Touch"
+          command: "pytest tests/test.py::TestTier10_Touch -v"
+          timeout: 5
+          max-score: 5
+
+      # Tier 15: the agent solves the push (success_rate >= 50%) over ~30 evaluation episodes.
+      - name: Tier 15 - Push success
+        id: tier15
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: "Tier 15: Push Success"
+          command: "pytest tests/test.py::TestTier15_PushSuccess -v"
+          timeout: 5
+          max-score: 5
+
+      - name: Autograding Reporter
+        uses: education/autograding-grading-reporter@v1
+        env:
+          TIER5_RESULTS: "${{steps.tier5.outputs.result}}"
+          TIER10_RESULTS: "${{steps.tier10.outputs.result}}"
+          TIER15_RESULTS: "${{steps.tier15.outputs.result}}"
+        with:
+          runners: tier5,tier10,tier15
