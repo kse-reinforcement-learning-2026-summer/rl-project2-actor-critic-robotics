@@ -187,8 +187,8 @@ You are here.
 ### 2. Clone your repository
 
 ```bash
-git clone https://github.com/kse-reinforcement-learning-2026-summer/rl-project2-actor-critic-robotics-<your-username>.git
-cd rl-project2-actor-critic-robotics-<your-username>
+git clone https://github.com/kse-reinforcement-learning-2026-summer/coding-project-2-rl-robotics-<your-username>.git
+cd coding-project-2-rl-robotics-<your-username>
 ```
 
 > If you haven't authenticated Git yet, install the [GitHub CLI](https://cli.github.com/) and run `gh auth login`.
@@ -299,7 +299,7 @@ If you're new to AI coding tools, some free options:
 
 ```bash
 # Clone
-git clone https://github.com/kse-reinforcement-learning-2026-summer/rl-project2-actor-critic-robotics-<username>.git
+git clone https://github.com/kse-reinforcement-learning-2026-summer/coding-project-2-rl-robotics-<username>.git
 
 # Test locally (exactly what CI runs)
 pytest tests/test.py -v
