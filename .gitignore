@@ -2,6 +2,7 @@
 project_completed.ipynb
 eval/
 *_completed.*
+autograding.yaml
 
 # Python
 __pycache__/

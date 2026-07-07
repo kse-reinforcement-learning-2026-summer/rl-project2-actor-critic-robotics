@@ -17,6 +17,7 @@ Run locally:   cd template && pytest tests/test.py -v
 Point a run at a specific model / notebook:  MODEL_PATH=... NOTEBOOK_PATH=... pytest tests/test.py -v
 """
 
+import hashlib
 import os
 
 import pytest
@@ -35,10 +36,26 @@ NOTEBOOK_PATH = next(
 
 
 @pytest.fixture(scope="session")
-def metrics():
-    """Evaluate the submitted model ONCE (touch_rate + success_rate come from the same episodes)."""
+def metrics(request):
+    """Evaluate the submitted model ONCE (touch_rate + success_rate come from the same episodes).
+
+    Cached on disk under .pytest_cache/ (already gitignored), keyed by model.pt's content hash.
+    GitHub Classroom's autograding scores Tier 10 and Tier 15 as two separate ``pytest`` processes
+    (so each gets its own partial-credit line) — without this cache, that would re-run the 30
+    evaluation episodes twice. The second process finds a hit (same model.pt) and reuses it.
+    """
     grading.check_contract(MODEL_PATH)   # loadable + I/O contract before we spend episodes on it
-    return grading.evaluate(MODEL_PATH, n_episodes=contract.EVAL_EPISODES_CI)
+    with open(MODEL_PATH, "rb") as f:
+        fingerprint = hashlib.sha256(f.read()).hexdigest()
+
+    cache_key = "panda_push_pixels/eval_metrics"
+    cached = request.config.cache.get(cache_key, None)
+    if cached is not None and cached.get("fingerprint") == fingerprint:
+        return cached["metrics"]
+
+    result = grading.evaluate(MODEL_PATH, n_episodes=contract.EVAL_EPISODES_CI)
+    request.config.cache.set(cache_key, {"fingerprint": fingerprint, "metrics": result})
+    return result
 
 
 # ===========================================================================
